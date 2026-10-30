@@ -1,0 +1,164 @@
+
+\documentclass[11pt,a4paper]{article}
+
+% Template ACL chinh thuc
+\usepackage[final]{acl}
+
+% Ho tro tieng Viet voi XeLaTeX
+\usepackage{fontspec}
+\setmainfont{Noto Serif}
+\usepackage{microtype}
+
+\title{
+Dịch máy Anh--Việt sử dụng Seq2Seq LSTM với Attention
+và Transformer: Đề xuất nghiên cứu
+}
+
+% THAY HO TEN VA MSSV TRUOC KHI NOP
+\author{
+Tú (MSSV: điền mã) \quad
+Trung (MSSV: điền mã) \quad
+Đức (MSSV: điền mã) \\
+Nhóm: điền mã nhóm
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Đề tài nghiên cứu bài toán dịch máy thần kinh từ
+tiếng Anh sang tiếng Việt bằng hai kiến trúc:
+Seq2Seq LSTM kết hợp cơ chế Attention và
+Transformer Encoder--Decoder. Nhóm sử dụng bộ
+dữ liệu song ngữ PhoMT, xây dựng quy trình tiền
+xử lý và huấn luyện thống nhất, sau đó so sánh
+chất lượng bản dịch bằng corpus BLEU. Nghiên cứu
+tập trung vào việc tự cài đặt các thành phần
+cốt lõi, phân tích lỗi dịch và trực quan hóa
+attention. Do hạn chế về tài nguyên tính toán,
+nhóm dự kiến tiến hành thí nghiệm trên tập con
+của PhoMT bằng GPU miễn phí.
+\end{abstract}
+
+\section{Giới thiệu}
+
+Dịch máy thần kinh (Neural Machine Translation,
+NMT) sử dụng mạng học sâu để ánh xạ một chuỗi
+ngôn ngữ nguồn thành chuỗi ngôn ngữ đích.
+Seq2Seq là một hướng tiếp cận nền tảng, trong
+khi Attention giúp mô hình khai thác thông tin
+từ các vị trí khác nhau của câu nguồn
+\citep{bahdanau2015nmt}. Transformer thay thế
+các bước tính toán hồi quy bằng cơ chế
+self-attention \citep{vaswani2017attention}.
+
+Mục tiêu của nhóm là tự cài đặt và so sánh
+hai kiến trúc trên cùng bài toán dịch
+\textbf{Anh sang Việt}, qua đó nghiên cứu
+sự khác biệt về chất lượng dịch, tốc độ
+huấn luyện và các dạng lỗi thường gặp.
+
+\section{Dữ liệu}
+
+Nhóm sử dụng PhoMT, bộ dữ liệu song ngữ
+Việt--Anh quy mô lớn được giới thiệu bởi
+\citet{doan2021phomt}. Bộ dữ liệu có
+3.015.869 cặp câu, gồm 2.977.999 cặp train,
+18.719 cặp validation và 19.151 cặp test.
+
+Nhóm giữ nguyên cách chia dữ liệu được
+công bố, chỉ sử dụng tập train để xây dựng
+tokenizer và từ vựng. Các bước chuẩn bị
+dữ liệu gồm kiểm tra cặp câu, lọc câu không
+hợp lệ, chuẩn hóa văn bản và chuyển câu
+thành chuỗi token. Tập con huấn luyện
+sẽ được chọn từ train với seed cố định
+để phù hợp tài nguyên GPU miễn phí.
+
+\section{Phương pháp}
+
+\paragraph{Seq2Seq LSTM với Attention.}
+Mô hình gồm encoder LSTM biểu diễn câu nguồn
+và decoder LSTM sinh từng token tiếng Việt.
+Cơ chế Attention tính trọng số trên các
+hidden state của encoder để hình thành
+context vector tại mỗi bước giải mã.
+Nhóm tự xây dựng các thành phần encoder,
+decoder và Attention.
+
+\paragraph{Transformer.}
+Nhóm tự xây dựng Transformer nhỏ theo
+\citet{vaswani2017attention}, gồm positional
+encoding, multi-head attention, feed-forward
+network, residual connection và layer
+normalization. Decoder sử dụng causal mask
+để không nhìn thấy các token tương lai.
+
+\paragraph{Đối chứng.}
+Hai mô hình được huấn luyện và đánh giá trên
+cùng tập dữ liệu và cùng quy trình tiền xử lý.
+Các cấu hình và ngân sách tính toán sẽ
+được ghi nhận để việc so sánh minh bạch.
+
+\section{Thiết kế thực nghiệm}
+
+Nhóm dự kiến sử dụng PyTorch và GPU miễn phí
+trên Kaggle hoặc Google Colab. Quá trình
+huấn luyện sẽ theo dõi training loss,
+validation loss, thời gian mỗi epoch và
+lưu checkpoint của mô hình tốt nhất trên
+tập validation.
+
+Chất lượng dịch được đánh giá bằng
+\textbf{corpus BLEU} \citep{papineni2002bleu}.
+Nhóm sử dụng cùng tập test, cùng phương pháp
+giải mã và cấu hình đánh giá được công bố
+rõ ràng. Ngoài BLEU, nhóm phân tích các
+trường hợp dịch thiếu từ, sai nghĩa và
+câu dài; đồng thời trực quan hóa
+attention map.
+
+\section{Kế hoạch và phân công}
+
+\textbf{Tuần 1:} Khảo sát bài báo, kiểm tra
+PhoMT, chuẩn bị môi trường và Proposal.
+
+\textbf{Tuần 2:} Hoàn thiện pipeline dữ liệu,
+tokenizer, baseline và huấn luyện thử.
+
+\textbf{Tuần 3:} Hoàn thiện hai mô hình,
+checkpoint và báo cáo tiến độ.
+
+\textbf{Tuần 4:} Huấn luyện, so sánh BLEU và
+thực hiện ablation.
+
+\textbf{Tuần 5:} Phân tích lỗi, trực quan hóa
+attention và soạn báo cáo.
+
+\textbf{Tuần 6:} Hoàn thiện báo cáo ACL,
+slide và demo; chuẩn bị bảo vệ cá nhân.
+
+\textbf{Tú:} Dữ liệu, tokenizer, DataLoader,
+BLEU và tổng hợp Proposal.
+
+\textbf{Trung:} Seq2Seq Attention, giải mã,
+demo và báo cáo tiến độ.
+
+\textbf{Đức:} Transformer, huấn luyện,
+checkpoint, logging và tổng hợp báo cáo cuối.
+
+Các thành viên cùng tham gia kiểm thử,
+đánh giá kết quả, review Pull Request và
+chuẩn bị trả lời vấn đáp.
+
+\section{Kết luận}
+
+Đề tài hướng đến một hệ thống dịch máy
+Anh--Việt có mã nguồn tự triển khai,
+quy trình thực nghiệm tái lập được và
+phân tích có căn cứ về ưu, nhược điểm
+của Seq2Seq Attention và Transformer.
+
+\bibliography{references}
+
+\end{document}
