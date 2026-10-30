@@ -1,0 +1,22 @@
+# Du lieu PhoMT - khong duoc push len GitHub
+local_artifacts/
+data/
+*.zip
+
+# Model checkpoints
+*.pt
+*.pth
+*.ckpt
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
