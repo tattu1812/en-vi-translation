@@ -35,3 +35,18 @@ __pycache__/
 # Local backup files
 *_backup.*
 main_test_backup.tex
+
+# LaTeX temporary files
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+
+# Local backup files
+*_backup.*
+main_test_backup.tex
