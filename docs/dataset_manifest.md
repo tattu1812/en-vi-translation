@@ -1,91 +1,114 @@
-# Báo cáo khảo sát bộ dữ liệu PhoMT
+# Dataset Manifest — IWSLT'15 English–Vietnamese
 
-## 1. Thông tin bộ dữ liệu
+## 1. Thông tin tổng quan
 
-- **Tên bộ dữ liệu:** PhoMT – A High-Quality and Large-Scale Benchmark Dataset for Vietnamese-English Machine Translation
-- **Đơn vị phát triển:** VinAI Research
-- **Công bố khoa học:** Hội nghị EMNLP 2021
-- **Nguồn dữ liệu:** https://huggingface.co/datasets/vinai/PhoMT
-- **Bài báo gốc:** https://aclanthology.org/2021.emnlp-main.369/
-- **Bài toán:** Dịch máy thần kinh từ tiếng Anh sang tiếng Việt
-- **Ngôn ngữ đầu vào:** Tiếng Anh (`en`)
-- **Ngôn ngữ đầu ra:** Tiếng Việt (`vi`)
-- **Tổng số cặp câu:** 3.015.869
+- **Tên bộ dữ liệu:** IWSLT'15 English–Vietnamese.
+- **Bài toán:** Dịch máy thần kinh từ tiếng Anh sang tiếng Việt (English → Vietnamese).
+- **Nguồn dữ liệu:** Stanford NLP — Neural Machine Translation.
+- **Repository cung cấp bản dữ liệu:** https://github.com/stefan-it/nmt-en-vi
+- **Trang Stanford NLP:** https://nlp.stanford.edu/projects/nmt/
+- **File nhóm đã nhận:** `nmt-en-vi-master.zip`.
+- **Mục đích sử dụng:** Huấn luyện, kiểm thử và so sánh hai mô hình Seq2Seq LSTM với Attention và Transformer Encoder–Decoder.
 
-## 2. Cấu trúc bộ dữ liệu
+Nhóm sử dụng dữ liệu IWSLT'15 thay cho PhoMT nhằm phù hợp hơn với quy mô thực nghiệm và tài nguyên GPU miễn phí.
 
-Bộ dữ liệu PhoMT được cung cấp dưới dạng file nén `PhoMT.zip`, bao gồm hai thư mục chính:
+## 2. Cấu trúc dữ liệu gốc
 
-- `tokenization/`: Dữ liệu văn bản đã được tách token.
-- `detokenization/`: Dữ liệu văn bản ở dạng đã ghép token thành câu.
+File ZIP được cung cấp có cấu trúc:
 
-Mỗi thư mục gồm ba tập dữ liệu:
+```text
+nmt-en-vi-master/
+├── README.md
+├── data/
+│   ├── train-en-vi.tgz
+│   ├── dev-2012-en-vi.tgz
+│   └── test-2013-en-vi.tgz
+└── tensorboard_envi.png
+```
 
-- `train/`: Dùng để huấn luyện mô hình.
-- `dev/`: Dùng để đánh giá trong quá trình huấn luyện, lựa chọn mô hình và điều chỉnh siêu tham số.
-- `test/`: Dùng để đánh giá cuối cùng.
+Nội dung các file nén:
 
-Trong dự án này, nhóm dự kiến sử dụng dữ liệu từ thư mục `detokenization/` để xây dựng tokenizer và chuẩn bị đầu vào cho hai mô hình Seq2Seq Attention và Transformer.
+| File nén | File tiếng Anh | File tiếng Việt |
+|---|---|---|
+| `train-en-vi.tgz` | `train.en` | `train.vi` |
+| `dev-2012-en-vi.tgz` | `tst2012.en` | `tst2012.vi` |
+| `test-2013-en-vi.tgz` | `tst2013.en` | `tst2013.vi` |
+
+Các cặp câu được căn chỉnh theo thứ tự dòng: dòng thứ `i` của file `.en` tương ứng với dòng thứ `i` của file `.vi`.
 
 ## 3. Thống kê dữ liệu
 
-| Tập dữ liệu | Số câu tiếng Anh | Số câu tiếng Việt | Câu rỗng | Dòng không khớp |
-|---|---:|---:|---:|---:|
-| Train | 2.977.999 | 2.977.999 | 0 | 0 |
-| Dev | 18.719 | 18.719 | 0 | 0 |
-| Test | 19.151 | 19.151 | 0 | 0 |
-| **Tổng** | **3.015.869** | **3.015.869** | **0** | **0** |
+| Tập | Số câu tiếng Anh | Số câu tiếng Việt | Số cặp câu |
+|---|---:|---:|---:|
+| Train | 133.317 | 133.317 | 133.317 |
+| Validation | 1.553 | 1.553 | 1.553 |
+| Test | 1.268 | 1.268 | 1.268 |
+| **Tổng** | **136.138** | **136.138** | **136.138** |
 
-Các số liệu được thu thập bằng cách kiểm tra trực tiếp bộ dữ liệu PhoMT đã tải về, sử dụng các lệnh Linux và chương trình Python.
+Các số liệu được kiểm tra trực tiếp bằng cách đọc nội dung các file nén trong `nmt-en-vi-master.zip`.
 
-## 4. Kết quả kiểm tra dữ liệu ban đầu
+Kết quả ban đầu: số dòng của hai ngôn ngữ khớp nhau trong cả ba tập. Chưa hoàn tất kiểm tra câu rỗng, câu trùng lặp, mức độ tương ứng ngữ nghĩa và khả năng trùng lặp giữa các tập.
 
-Những nội dung đã kiểm tra:
+## 4. Kế hoạch tiền xử lý
 
-- File `PhoMT.zip` đã được tải và giải nén thành công.
-- Xác định được đầy đủ ba tập train, dev và test.
-- Số dòng tiếng Anh và tiếng Việt trong từng tập bằng nhau.
-- Không phát hiện câu tiếng Anh rỗng.
-- Không phát hiện câu tiếng Việt rỗng.
-- Không phát hiện dòng không khớp giữa hai ngôn ngữ.
-- Đã kiểm tra thủ công năm cặp câu mẫu.
+Nhóm dự kiến thực hiện:
 
-Nhận xét: Bộ dữ liệu đáp ứng các yêu cầu cơ bản về cấu trúc và số lượng cặp câu song ngữ. Tuy nhiên, các kiểm tra trên chưa đủ để kết luận toàn bộ các cặp câu đều có chất lượng dịch chính xác.
+1. Giải nén và đọc các file song ngữ.
+2. Kiểm tra số dòng, câu rỗng và cặp câu không hợp lệ.
+3. Kiểm tra câu trùng lặp và khả năng rò rỉ giữa các tập.
+4. Chuẩn hóa Unicode, khoảng trắng và các HTML entity khi cần thiết.
+5. Xây dựng tokenizer hoặc subword vocabulary chỉ từ tập train.
+6. Bổ sung các token đặc biệt như PAD, BOS, EOS và UNK theo thiết kế.
+7. Chuyển câu thành token ID, padding và tạo batch.
+8. Kiểm soát độ dài chuỗi và ghi lại số lượng câu bị loại nếu có.
 
-Các nội dung cần kiểm tra bổ sung:
+Các bước làm sạch cần áp dụng nhất quán cho dữ liệu đầu vào của hai mô hình.
 
-- Các cặp câu bị trùng lặp.
-- Dữ liệu trùng lặp giữa train, dev và test.
-- Phân bố độ dài câu.
-- Các cặp câu có độ dài bất thường.
-- Các trường hợp bản dịch không tương ứng về ngữ nghĩa.
+Không sử dụng validation hoặc test để huấn luyện tokenizer hay cập nhật trọng số mô hình.
 
-## 5. Kế hoạch sử dụng dữ liệu
+## 5. Sử dụng dữ liệu trong thực nghiệm
 
-Nhóm dự kiến sử dụng PhoMT theo phương án sau:
+### Mô hình 1: Seq2Seq LSTM với Attention
 
-1. Giữ nguyên cách chia train, dev và test của bộ dữ liệu gốc.
-2. Sử dụng tiếng Anh làm ngôn ngữ nguồn và tiếng Việt làm ngôn ngữ đích.
-3. Xây dựng tokenizer BPE hoặc SentencePiece dựa trên tập train.
-4. Sử dụng một tập con dữ liệu train nếu tài nguyên GPU miễn phí không đủ để huấn luyện toàn bộ.
-5. Không sử dụng tập test để huấn luyện hoặc lựa chọn siêu tham số.
-6. Huấn luyện Seq2Seq LSTM Attention và Transformer trên cùng cấu hình dữ liệu để đảm bảo tính công bằng.
-7. Đánh giá hai mô hình bằng BLEU trên cùng tập test.
+- Encoder LSTM xử lý chuỗi token tiếng Anh.
+- Decoder LSTM kết hợp Attention tạo bản dịch tiếng Việt.
+- Nhóm tự xây dựng các thành phần cốt lõi bằng PyTorch.
 
-Quy mô dữ liệu huấn luyện chính thức sẽ được quyết định sau khi nhóm chạy thử và đo thời gian huấn luyện trên GPU miễn phí.
+### Mô hình 2: Transformer
 
-## 6. Điều khoản sử dụng
+- Transformer Encoder–Decoder với self-attention.
+- Bao gồm positional encoding, multi-head attention, feed-forward network và masking.
+- Nhóm tự xây dựng các thành phần cốt lõi bằng PyTorch.
 
-Theo README chính thức của PhoMT:
+### Nguyên tắc so sánh
 
-- Bộ dữ liệu chỉ được sử dụng cho mục đích nghiên cứu hoặc giáo dục.
-- Không được phân phối lại toàn bộ hoặc một phần dữ liệu, kể cả phiên bản đã chỉnh sửa.
-- Phải trích dẫn bài báo PhoMT (EMNLP 2021) khi sử dụng dữ liệu để tạo ra kết quả nghiên cứu được công bố.
+- Cùng bộ dữ liệu train/validation/test.
+- Cùng tokenizer và quy trình tiền xử lý trong thí nghiệm so sánh chính.
+- Ghi nhận seed, số tham số, cấu hình huấn luyện, GPU và thời gian thực nghiệm.
+- Đánh giá chất lượng trên cùng tập test bằng corpus BLEU với SacreBLEU.
+- Phân tích ví dụ dịch sai và ảnh hưởng của độ dài câu.
+- Không sử dụng checkpoint pretrained để thay thế việc tự xây dựng và huấn luyện hai mô hình.
 
-Do đó, nhóm sẽ không đưa dữ liệu PhoMT gốc hoặc đã xử lý lên GitHub. Repository chỉ lưu mã nguồn, cấu hình, hướng dẫn tải dữ liệu và các thông tin thống kê cần thiết.
+## 6. Quản lý dữ liệu trong repository
 
-## 7. Tài liệu tham khảo
+Dữ liệu gốc và dữ liệu đã giải nén được lưu tại:
 
-Doan, Long, Linh The Nguyen, Nguyen Luong Tran, Thai Hoang, and Dat Quoc Nguyen. 2021. *PhoMT: A High-Quality and Large-Scale Benchmark Dataset for Vietnamese-English Machine Translation*. Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP 2021).
+`local_artifacts/data/`
 
-Nguồn: https://aclanthology.org/2021.emnlp-main.369/
+Các file dữ liệu không được commit lên GitHub. Repository chỉ lưu mã nguồn, cấu hình, tài liệu và các kết quả nhỏ phục vụ tái lập thí nghiệm.
+
+Nhóm cần xác minh điều khoản sử dụng và phân phối dữ liệu từ nguồn tương ứng trước khi chia sẻ dữ liệu ra bên ngoài.
+
+## 7. Nguồn tham khảo
+
+- Stanford NLP — Neural Machine Translation: https://nlp.stanford.edu/projects/nmt/
+- Repository nmt-en-vi: https://github.com/stefan-it/nmt-en-vi
+- Luong and Manning (2015), *Stanford Neural Machine Translation Systems for Spoken Language Domains*: https://aclanthology.org/2015.iwslt-evaluation.11/
+
+## 8. Trạng thái
+
+- Đã xác định tập train, validation và test.
+- Đã xác nhận số dòng tiếng Anh và tiếng Việt khớp nhau.
+- Chưa hoàn thành bước kiểm tra chất lượng chi tiết.
+- Chưa xác nhận tokenizer và cấu hình huấn luyện cuối cùng.
+- Dữ liệu chính thức của dự án: **IWSLT'15 English–Vietnamese**.
