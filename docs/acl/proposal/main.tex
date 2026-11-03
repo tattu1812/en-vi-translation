@@ -10,8 +10,8 @@
 \usepackage{microtype}
 
 \title{
-Dịch máy Anh--Việt sử dụng Seq2Seq LSTM với Attention
-và Transformer: Đề xuất nghiên cứu
+Xây dựng và so sánh hai mô hình dịch máy Anh--Việt:
+Seq2Seq LSTM với Attention và Transformer
 }
 
 % THAY HO TEN VA MSSV TRUOC KHI NOP
@@ -26,18 +26,25 @@ Nhóm: 1
 \maketitle
 
 \begin{abstract}
-Đề tài nghiên cứu bài toán dịch máy thần kinh từ
-tiếng Anh sang tiếng Việt bằng hai kiến trúc:
-Seq2Seq LSTM kết hợp Attention và Transformer
-Encoder--Decoder. Nhóm sử dụng bộ dữ liệu song
-ngữ PhoMT, xây dựng quy trình tiền xử lý,
-huấn luyện và đánh giá thống nhất. Hai mô hình
-được so sánh bằng corpus BLEU, thời gian
-huấn luyện và phân tích lỗi dịch. Nghiên cứu
-tập trung vào tự cài đặt các thành phần cốt lõi
-và trực quan hóa attention. Do giới hạn tài nguyên,
-nhóm dự kiến sử dụng tập con PhoMT cùng GPU
-miễn phí trên Kaggle hoặc Google Colab.
+Đề tài tập trung xây dựng, huấn luyện và so sánh
+hai mô hình dịch máy thần kinh từ tiếng Anh
+sang tiếng Việt: Seq2Seq LSTM kết hợp cơ chế
+Attention và Transformer Encoder--Decoder.
+Nhóm sử dụng bộ dữ liệu song ngữ IWSLT'15
+English--Vietnamese để xây dựng quy trình
+tiền xử lý, huấn luyện và đánh giá thống nhất.
+Hai mô hình được tự cài đặt bằng PyTorch,
+không sử dụng các mô hình dịch đã huấn luyện
+sẵn. Nghiên cứu so sánh chất lượng bản dịch
+bằng corpus BLEU, thời gian huấn luyện,
+hiệu quả tính toán và khả năng xử lý câu
+có độ dài khác nhau. Ngoài đánh giá định
+lượng, nhóm phân tích các trường hợp dịch
+sai và trực quan hóa Attention nhằm làm rõ
+ưu điểm, hạn chế của từng kiến trúc.
+Các thí nghiệm dự kiến được thực hiện
+trên GPU miễn phí và hướng đến quy trình có
+khả năng tái lập.
 \end{abstract}
 
 \section{Giới thiệu}
@@ -47,44 +54,48 @@ NMT) sử dụng mạng học sâu để chuyển đổi
 một chuỗi ngôn ngữ nguồn thành chuỗi
 ngôn ngữ đích. Kiến trúc Seq2Seq sử dụng
 encoder và decoder để xử lý dữ liệu chuỗi.
-Cơ chế Attention giúp decoder tập trung
-vào các vị trí khác nhau của câu nguồn
-\citep{bahdanau2015nmt}.
+Khi kết hợp với Attention, decoder có thể
+tập trung vào những vị trí liên quan trong
+câu nguồn\citep{bahdanau2015nmt}.
 
 Transformer sử dụng self-attention thay
 cho cơ chế hồi quy, qua đó tăng khả năng
 xử lý song song trong huấn luyện
 \citep{vaswani2017attention}.
 
-Mục tiêu của nghiên cứu là tự cài đặt,
-huấn luyện và so sánh Seq2Seq LSTM với
-Attention và Transformer trên cùng bài
-toán dịch \textbf{Anh sang Việt}, chú trọng
-chất lượng bản dịch, chi phí huấn luyện
-và các lỗi thường gặp.
+Mục tiêu của đề tài là \textbf{xây dựng
+và so sánh hai mô hình} Seq2Seq LSTM
+với Attention và Transformer trên cùng
+bài toán dịch \textbf{Anh sang Việt}.
+Nhóm tập trung đánh giá chất lượng dịch,
+chi phí tính toán và những lỗi thường gặp,
+thay vì chỉ triển khai mô hình có sẵn.
 
 \section{Dữ liệu}
 
-Nhóm sử dụng PhoMT, bộ dữ liệu song ngữ
-Việt--Anh được giới thiệu bởi
-\citet{doan2021phomt}. Dữ liệu gồm
-3.015.869 cặp câu, trong đó tập train có
-2.977.999 cặp, validation có 18.719 cặp
-và test có 19.151 cặp.
+Nghiên cứu sử dụng bộ dữ liệu
+IWSLT'15 English--Vietnamese, được cung cấp
+thông qua Stanford NLP và sử dụng trong
+nghiên cứu của \citet{luong2015iwslt}.
 
-Nhóm giữ nguyên ba tập đã công bố.
-Tokenizer và từ vựng được xây dựng chỉ
-từ tập train nhằm tránh rò rỉ thông tin.
-Các bước tiền xử lý gồm kiểm tra cặp câu,
-chuẩn hóa văn bản, tokenization, giới
-hạn độ dài và tạo các batch có padding.
+Bộ dữ liệu gồm 133.317 cặp câu huấn luyện,
+1.553 cặp câu validation (\texttt{tst2012})
+và 1.268 cặp câu kiểm thử (\texttt{tst2013}).
+Mỗi cặp gồm một câu tiếng Anh và một câu
+tiếng Việt tương ứng.
 
-Do giới hạn tài nguyên tính toán,
-nhóm dự kiến sử dụng tập con được lấy
-từ tập train với random seed cố định.
-Tập validation được dùng để lựa chọn
-checkpoint; tập test chỉ dùng để đánh
-giá cuối cùng.
+Nhóm giữ nguyên cách chia dữ liệu và
+chỉ xây dựng tokenizer, từ vựng trên
+tập train. Quy trình tiền xử lý gồm
+kiểm tra cặp câu, chuẩn hóa văn bản,
+tokenization, thêm token đặc biệt,
+padding và giới hạn độ dài chuỗi.
+
+Tập validation được dùng để điều chỉnh
+siêu tham số và lựa chọn checkpoint.
+Tập test chỉ sử dụng để đánh giá cuối cùng.
+Hai mô hình được huấn luyện trên cùng
+dữ liệu nhằm bảo đảm tính nhất quán.
 
 \section{Phương pháp}
 
@@ -98,91 +109,89 @@ encoder, sau đó tạo context vector.
 Nhóm tự xây dựng encoder, decoder,
 Attention và quá trình giải mã.
 
-\paragraph{Transformer.}
-Nhóm tự xây dựng Transformer
-Encoder--Decoder theo
-\citet{vaswani2017attention}, gồm
-positional encoding, multi-head attention,
-feed-forward network, residual connection
-và layer normalization.
-Decoder sử dụng causal mask để không
+\paragraph{Mô hình 2: Transformer.}
+Nhóm xây dựng Transformer Encoder--Decoder
+theo \citet{vaswani2017attention}.
+Các thành phần được tự cài đặt gồm
+embedding, positional encoding,
+multi-head attention, feed-forward network,
+residual connection và layer normalization.
+Decoder sử dụng causal mask để tránh
 truy cập token tương lai.
 
 \paragraph{Đối chứng.}
-Hai mô hình sử dụng cùng bộ dữ liệu
-và quy trình đánh giá. Cấu hình mô hình,
-số tham số, ngân sách huấn luyện và
-chiến lược giải mã được ghi nhận để
-hỗ trợ so sánh công bằng.
+Hai mô hình sử dụng cùng tập train,
+validation, test, tokenizer và cấu hình
+đánh giá. Nhóm ghi nhận số tham số,
+siêu tham số, phần cứng và ngân sách
+huấn luyện. Các lựa chọn tối ưu riêng
+cho từng kiến trúc được công bố rõ ràng
+để bảo đảm tính minh bạch.
 
 \section{Thiết kế thực nghiệm}
 
-Nhóm dự kiến triển khai bằng PyTorch,
-sử dụng GPU miễn phí trên Kaggle
-hoặc Google Colab. Trong quá trình
-huấn luyện, nhóm theo dõi training loss,
-validation loss, thời gian mỗi epoch
-và lưu checkpoint có chất lượng
-validation tốt nhất.
+Hai mô hình được tự cài đặt bằng PyTorch,
+huấn luyện trên GPU miễn phí từ Kaggle
+hoặc Google Colab. Nhóm theo dõi
+training loss, validation loss, thời gian
+huấn luyện và lưu checkpoint tốt nhất
+trên tập validation.
 
 Chất lượng dịch được đánh giá bằng
 \textbf{corpus BLEU}
-\citep{papineni2002bleu}.
-Nhóm sử dụng SacreBLEU và báo cáo
-cấu hình tokenization để kết quả
-có thể tái lập. Cả hai mô hình được
-kiểm thử trên cùng tập test.
+\citep{papineni2002bleu} thông qua
+SacreBLEU trên cùng tập test và cấu hình
+đánh giá thống nhất.
 
-Ngoài kết quả định lượng, nhóm phân tích
-các câu dịch sai nghĩa, thiếu thông tin
-hoặc gặp khó khăn với câu dài;
-đồng thời trực quan hóa attention map.
-Nhóm dự kiến thực hiện ablation để đánh
-giá vai trò của các thành phần kiến trúc.
+Nhóm so sánh BLEU, số tham số, thời gian
+huấn luyện và chất lượng dịch theo độ dài
+câu. Ngoài ra, nhóm phân tích các lỗi dịch,
+trực quan hóa attention map và thực hiện
+ablation trong phạm vi tài nguyên cho phép.
+
 
 \section{Kế hoạch và phân công}
 
-\textbf{Tuần 1:} Khảo sát tài liệu,
-kiểm tra PhoMT, khởi tạo GitHub và
-hoàn thành Proposal.
+\textbf{Tuần 1:} Nghiên cứu tài liệu,
+chuẩn bị IWSLT'15 và Proposal.
 
-\textbf{Tuần 2:} Hoàn thiện pipeline dữ liệu,
-tokenizer, baseline và huấn luyện thử.
+\textbf{Tuần 2:} Xây dựng pipeline dữ liệu,
+tokenizer và baseline.
 
-\textbf{Tuần 3:} Xây dựng hai mô hình,
-checkpoint và báo cáo tiến độ.
+\textbf{Tuần 3:} Hoàn thiện hai mô hình,
+chạy thử và báo cáo tiến độ.
 
-\textbf{Tuần 4:} Thực nghiệm, đánh giá BLEU,
-điều chỉnh siêu tham số và ablation.
+\textbf{Tuần 4:} Huấn luyện, so sánh BLEU,
+tốc độ và thực hiện ablation.
 
 \textbf{Tuần 5:} Phân tích lỗi, trực quan hóa
-attention và viết bản thảo báo cáo.
+attention và viết báo cáo.
 
 \textbf{Tuần 6:} Hoàn thiện báo cáo ACL,
-slide, demo và chuẩn bị bảo vệ cá nhân.
+slide, demo và bảo vệ.
 
-\textbf{Tú:} PhoMT, tokenizer, DataLoader,
-BLEU, đánh giá và tổng hợp Proposal.
+\textbf{Nguyễn Tất Tú:} Dữ liệu IWSLT'15,
+tokenizer, DataLoader, BLEU và Proposal.
 
-\textbf{Trung:} Seq2Seq LSTM Attention,
-giải mã, demo và báo cáo tiến độ.
+\textbf{Nguyễn Văn Trung:} Seq2Seq LSTM 
+Attention, giải mã, demo và báo cáo tiến độ.
 
-\textbf{Đức:} Transformer, huấn luyện,
-checkpoint, logging và tổng hợp
-báo cáo cuối kỳ.
+\textbf{Dương Hoàng Đức:} Transformer, huấn 
+luyện, checkpoint, logging và báo cáo cuối kỳ.
 
-Các thành viên phối hợp kiểm thử,
-review Pull Request và phân tích kết quả.
+Cả nhóm cùng kiểm thử, phân tích kết quả
+và review Pull Request.
 
 \section{Kết luận}
 
-Nghiên cứu hướng đến một hệ thống
-dịch máy Anh--Việt có mã nguồn
-tự triển khai, quy trình thực nghiệm
-tái lập được và đánh giá rõ ràng
-sự khác biệt giữa Seq2Seq Attention
-và Transformer trong điều kiện
-tài nguyên tính toán hạn chế.
+Đề tài hướng đến việc xây dựng hoàn chỉnh
+hai mô hình dịch máy Anh--Việt và tiến hành
+so sánh thực nghiệm trong cùng điều kiện.
+Nghiên cứu giúp làm rõ điểm mạnh, hạn chế
+của Seq2Seq Attention và Transformer
+về chất lượng dịch và hiệu quả tính toán,
+đồng thời xây dựng mã nguồn có khả năng
+tái lập phục vụ học tập và nghiên cứu.
 
 \bibliography{references}
 
