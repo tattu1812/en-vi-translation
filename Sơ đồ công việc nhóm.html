@@ -1,0 +1,468 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Sơ đồ công việc nhóm</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: bảng 2x3. Hàng 1 là tên ba người, hàng 2 là ba swimlane; thời gian chạy từ trên xuống dưới. */
+:root {
+  --bg: #f5f7f6;
+  --surface: #ffffff;
+  --fg: #1b2427;
+  --muted: #5a696c;
+  --line: #d3dbdb;
+  --c0: #0d7a85;
+  --c1: #4752c4;
+  --c2: #b9520a;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1517; --surface: #172023; --fg: #e5ecec; --muted: #98a8ab; --line: #2a3a3d;
+    --c0: #4cc4cf; --c1: #98a0ff; --c2: #f59d5c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1517; --surface: #172023; --fg: #e5ecec; --muted: #98a8ab; --line: #2a3a3d;
+  --c0: #4cc4cf; --c1: #98a0ff; --c2: #f59d5c;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.page { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+h1 { font-family: var(--font-head); font-weight: 600; font-size: 24px; margin: 0; text-wrap: balance; }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; max-width: 72ch; line-height: 1.5; }
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--muted); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend svg { width: 34px; height: 14px; overflow: visible; }
+button#reset {
+  font: 500 12px var(--font-body); color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer;
+}
+button#reset:hover { border-color: var(--muted); }
+button#reset:focus-visible, .bubble:focus-visible, .pop textarea:focus-visible { outline: 2px solid var(--c1); outline-offset: 2px; }
+
+.wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.table { min-width: 900px; }
+.head { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); background: var(--surface); }
+.head > div { padding: 12px 16px 11px; border-top: 3px solid var(--cx); border-right: 1px solid var(--line); min-width: 0; }
+.head > div:last-child { border-right: 0; }
+.head b { display: block; font-family: var(--font-head); font-weight: 600; font-size: 15px; }
+.head small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+.l0 { --cx: var(--c0); } .l1 { --cx: var(--c1); } .l2 { --cx: var(--c2); }
+
+#board { position: relative; }
+.lanebg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+.lanebg > div { border-right: 1px solid var(--line); background: color-mix(in srgb, var(--cx) 4%, var(--bg)); }
+.lanebg > div:last-child { border-right: 0; }
+.timeline {
+  position: absolute; left: 6px; top: 10px; bottom: 10px; width: 14px; z-index: 0;
+  display: flex; flex-direction: column; align-items: center; pointer-events: none; color: var(--muted);
+}
+.timeline i { flex: 1; width: 1px; background: currentColor; opacity: .5; }
+.timeline em { font: 500 10px var(--font-body); writing-mode: vertical-rl; letter-spacing: .08em; text-transform: uppercase; padding: 6px 0; opacity: .85; }
+svg#edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; }
+path.edge { fill: none; stroke: var(--cx); stroke-width: 1.6; }
+path.edge.cross { stroke-width: 1.9; }
+path.edge.opt { stroke-dasharray: 5 4; }
+svg#edges.hl path.edge { opacity: .12; }
+svg#edges.hl path.edge.on { opacity: 1; }
+.bubble {
+  position: absolute; z-index: 2; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 3px 9px; font-size: 12.5px; line-height: 1.25; border-radius: 12px;
+  border: 1.5px solid var(--cx); background: color-mix(in srgb, var(--cx) 13%, var(--surface));
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.bubble.drag { cursor: grabbing; box-shadow: 0 6px 18px rgba(0, 0, 0, .18); z-index: 3; }
+.bubble.editing { cursor: text; user-select: text; -webkit-user-select: text; background: var(--surface); outline: 2px solid var(--cx); outline-offset: 1px; }
+.bubble.opt { border-style: dashed; background: var(--surface); color: var(--muted); }
+.bubble.pill {
+  border-radius: 999px; background: var(--surface); color: var(--cx); font-weight: 600; font-size: 11px;
+  letter-spacing: .08em; text-transform: uppercase;
+}
+@media (prefers-reduced-motion: no-preference) { .bubble { transition: box-shadow .15s; } }
+
+.pop {
+  position: absolute; z-index: 6; width: 236px; box-sizing: border-box; padding: 10px 11px 11px;
+  background: var(--surface); border: 1.5px solid var(--cx); border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+}
+.pop[hidden] { display: none; }
+.pop-t { font: 600 11px var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--cx); margin-bottom: 6px; }
+.pop textarea {
+  display: block; width: 100%; box-sizing: border-box; min-height: 40px; resize: none; overflow: hidden;
+  font: 400 12.5px/1.45 var(--font-body); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px;
+}
+.pop textarea::placeholder { color: var(--muted); opacity: .8; }
+</style>
+
+<div class="page">
+  <div class="top">
+    <div>
+      <h1>Sơ đồ công việc nhóm</h1>
+      <p class="sub">Mỗi lane là việc của một người, thời gian đi từ trên xuống và chỉ mang tính tương đối. Đường nối chéo lane nghĩa là việc ở đầu mũi tên cần kết quả của người kia. Rê chuột (hoặc chạm) vào bubble để xem việc cần làm và sửa trực tiếp trong ô đó. Nhấp đúp bubble để đổi tên, kéo để sắp xếp lại. Thay đổi được lưu trong trình duyệt này.</p>
+    </div>
+    <button id="reset" type="button">Đặt lại vị trí</button>
+  </div>
+  <div class="legend" aria-label="Chú thích">
+    <span><svg viewBox="0 0 34 14"><line x1="1" y1="7" x2="33" y2="7" stroke="var(--fg)" stroke-width="1.6"/></svg>Trình tự trong lane</span>
+    <span><svg viewBox="0 0 34 14"><path d="M1 2 H17 V12 H33" fill="none" stroke="var(--fg)" stroke-width="1.9"/></svg>Phụ thuộc sang lane khác</span>
+    <span><svg viewBox="0 0 34 14"><line x1="1" y1="7" x2="33" y2="7" stroke="var(--fg)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>Phần mở rộng, tùy chọn (bỏ trước nếu chậm)</span>
+  </div>
+  <div class="wrap">
+    <div class="table">
+      <div class="head">
+        <div class="l0"><b>Nguyễn Tất Tú</b><small>Dữ liệu, tokenizer, DataLoader, BLEU</small></div>
+        <div class="l1"><b>Nguyễn Văn Trung</b><small>Seq2Seq LSTM Attention, beam search, demo</small></div>
+        <div class="l2"><b>Dương Hoàng Đức</b><small>Transformer, huấn luyện, theo dõi tiến độ</small></div>
+      </div>
+      <div id="board">
+        <div class="lanebg"><div class="l0"></div><div class="l1"></div><div class="l2"></div></div>
+        <div class="timeline" aria-hidden="true"><em>Thời gian</em><i></i></div>
+        <svg id="edges" aria-hidden="true">
+          <defs>
+            <marker id="arr0" viewBox="0 0 8 8" refX="7" refY="4" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L8 4 L0 8 z" style="fill: var(--c0)"/></marker>
+            <marker id="arr1" viewBox="0 0 8 8" refX="7" refY="4" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L8 4 L0 8 z" style="fill: var(--c1)"/></marker>
+            <marker id="arr2" viewBox="0 0 8 8" refX="7" refY="4" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L8 4 L0 8 z" style="fill: var(--c2)"/></marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var UNIT = 100, PADT = 16, END_V = 12.5, KEY = 'sdcv-nhom1-v2';
+  function D() { return Array.prototype.join.call(arguments, '\n'); }
+  var nodes = [
+    // lane 0: Tú
+    { id: 'sT', lane: 0, v: 0, kind: 'start', label: 'Start' },
+    { id: 'T1', lane: 0, v: 1, label: "Tải dữ liệu IWSLT'15", desc: '' },
+    { id: 'T2', lane: 0, v: 2, label: 'Làm sạch dữ liệu', desc: D('Chuẩn hóa văn bản', 'Loại cặp câu không hợp lệ') },
+    { id: 'T3', lane: 0, v: 3, label: 'Huấn luyện tokenizer', desc: D('Huấn luyện SentencePiece BPE trên tập train', 'Chốt ID token đặc biệt cho cả nhóm') },
+    { id: 'T4', lane: 0, v: 3.8, label: 'Viết DataLoader', desc: D('Gom batch và padding', 'Chốt định dạng batch cho cả nhóm') },
+    { id: 'T5', lane: 0, v: 4.35, label: 'Cài đặt hàm BLEU', desc: D('Tính SacreBLEU', 'Tách BLEU theo nhóm độ dài câu') },
+    { id: 'T8', lane: 0, v: 5.3, kind: 'opt', label: 'So sánh tokenizer', desc: 'Phần mở rộng: so sánh BPE, SentencePiece và mức từ.' },
+    { id: 'T6', lane: 0, v: 8.2, label: 'Chạy BLEU các mô hình', desc: D('Sinh bản dịch tập test cho mọi mô hình và biến thể', 'Tính BLEU cho từng bản dịch') },
+    { id: 'T7', lane: 0, v: 10.3, label: 'Phân tích lỗi dịch', desc: D('Chọn khoảng 50 câu test', 'Phân loại lỗi (cả nhóm cùng làm)') },
+    { id: 'T9', lane: 0, v: 11.3, label: 'Viết báo cáo cuối kỳ', desc: D('Tú chịu trách nhiệm chính và tổng hợp', 'Trung và Đức viết phần của mình') },
+    { id: 'eT', lane: 0, v: END_V, kind: 'end', label: 'End' },
+    // lane 1: Trung
+    { id: 'sM', lane: 1, v: 0, kind: 'start', label: 'Start' },
+    { id: 'M1', lane: 1, v: 1, label: 'Thiết kế mô hình LSTM', desc: 'Chốt cấu trúc mô hình trước khi cài đặt.' },
+    { id: 'M2', lane: 1, v: 2, label: 'Cài đặt LSTM Attention', desc: D('Cài encoder, decoder và attention', 'Kiểm tra chạy được trên dữ liệu giả') },
+    { id: 'M3', lane: 1, v: 2.5, label: 'Cài đặt beam search', desc: D('Greedy và beam search dùng chung cho cả hai mô hình', 'Chốt giao diện step cho Đức') },
+    { id: 'M4', lane: 1, v: 4.7, label: 'Huấn luyện mô hình LSTM', desc: 'Chạy thử trên tập nhỏ rồi huấn luyện đầy đủ.' },
+    { id: 'A3', lane: 1, v: 7.2, label: 'Chạy ablation A3', desc: 'Huấn luyện LSTM không Attention để so sánh.' },
+    { id: 'A1', lane: 1, v: 6.4, label: 'Chạy ablation A1', desc: 'So sánh greedy và beam search trên cả hai mô hình.' },
+    { id: 'M7', lane: 1, v: 9, label: 'Vẽ attention map LSTM', desc: 'Vẽ attention của vài câu minh họa.' },
+    { id: 'M8', lane: 1, v: 10.8, label: 'Xây dựng demo dịch', desc: '' },
+    { id: 'eM', lane: 1, v: END_V, kind: 'end', label: 'End' },
+    // lane 2: Đức
+    { id: 'sD', lane: 2, v: 0, kind: 'start', label: 'Start' },
+    { id: 'D2', lane: 2, v: 2, label: 'Cài đặt Transformer', desc: D('Cài các thành phần theo bài báo gốc', 'Kiểm tra chạy được trên dữ liệu giả') },
+    { id: 'D4', lane: 2, v: 3, label: 'Tích hợp beam search', desc: 'Cài hàm step để beam search dùng chung chạy được với Transformer.' },
+    { id: 'D3', lane: 2, v: 3.5, label: 'Viết vòng huấn luyện', desc: D('Vòng huấn luyện dùng chung cho cả hai mô hình', 'Lưu checkpoint và ghi log') },
+    { id: 'D5', lane: 2, v: 5.4, label: 'Huấn luyện Transformer', desc: 'Chạy thử trên tập nhỏ rồi huấn luyện đầy đủ.' },
+    { id: 'A2', lane: 2, v: 6, label: 'Chạy ablation A2', desc: 'Huấn luyện Transformer 2 lớp để so với bản 3 lớp.' },
+    { id: 'D10', lane: 2, v: 7.2, kind: 'opt', label: 'Fine-tune mô hình mốc', desc: 'Phần mở rộng: EnViT5 hoặc mBART làm mốc tham chiếu.' },
+    { id: 'D7', lane: 2, v: 8.9, label: 'So sánh hai mô hình', desc: D('Tổng hợp BLEU, số tham số, thời gian', 'So sánh BLEU theo nhóm độ dài câu') },
+    { id: 'D8', lane: 2, v: 9.6, label: 'Vẽ attention map Transformer', desc: 'Vẽ cross-attention của vài câu minh họa.' },
+    { id: 'eD', lane: 2, v: END_V, kind: 'end', label: 'End' }
+  ];
+  var edges = [];
+  function chain(ids, kind) { for (var i = 0; i < ids.length - 1; i++) edges.push({ from: ids[i], to: ids[i + 1], kind: kind || 'seq' }); }
+  // trình tự trong lane (T5 -> T6 và D6 -> D7 đi thẳng, bỏ qua bubble tùy chọn)
+  chain(['sT', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T9', 'eT']);
+  chain(['sM', 'M1', 'M2', 'M3', 'M4', 'A1', 'A3', 'M7', 'M8', 'eM']);
+  chain(['sD', 'D2', 'D4', 'D3', 'D5', 'A2', 'D7', 'D8', 'eD']);
+  // nhánh tùy chọn
+  chain(['T5', 'T8', 'T6'], 'opt');
+  edges[edges.length - 1].mv = 7.8; // đường T8 -> T6 đi ngang ở mức này để không trùng các đường khác
+  chain(['A2', 'D10', 'D7'], 'opt');
+  // phụ thuộc sang lane khác: bubble nguồn nằm giữa hai bubble liên tiếp của người nhận
+  [['T4', 'M4'], ['T4', 'D5'], ['M3', 'D4'], ['D3', 'M4'], ['D5', 'A1'],
+   ['A1', 'T6'], ['A2', 'T6'], ['A3', 'T6'], ['T6', 'D7'], ['M7', 'T7'], ['D8', 'T7']
+  ].forEach(function (p) { edges.push({ from: p[0], to: p[1], kind: 'cross' }); });
+  // báo cáo cuối kỳ là việc chung: Trung và Đức nối vào bubble của Tú từ cạnh phải
+  [['M8', 'T9'], ['D8', 'T9']].forEach(function (p) { edges.push({ from: p[0], to: p[1], kind: 'join' }); });
+
+  var board = document.getElementById('board');
+  var svg = document.getElementById('edges');
+  var byId = {};
+  nodes.forEach(function (n) { byId[n.id] = n; n.ox = 0; n.oy = 0; n.defLabel = n.label; });
+
+  // nội dung đã sửa được lưu trong trình duyệt
+  function save() {
+    try {
+      var o = {};
+      nodes.forEach(function (n) { if (n.kind !== 'start' && n.kind !== 'end') o[n.id] = { l: n.label, d: n.desc || '' }; });
+      localStorage.setItem(KEY, JSON.stringify(o));
+    } catch (e) {}
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) nodes.forEach(function (n) { var s = saved[n.id]; if (s) { n.label = s.l || n.label; n.desc = s.d; } });
+  } catch (e) {}
+
+  var pop = document.createElement('div');
+  pop.className = 'pop'; pop.hidden = true;
+  pop.innerHTML = '<div class="pop-t"></div><textarea id="pop-ta" rows="1" spellcheck="false" aria-label="Việc cần làm"></textarea>';
+  board.appendChild(pop);
+  var popT = pop.querySelector('.pop-t'), popTa = pop.querySelector('textarea');
+  var cur = null, hideT = 0, pinned = false, editing = null;
+
+  nodes.forEach(function (n) {
+    var el = document.createElement('div');
+    var pill = n.kind === 'start' || n.kind === 'end';
+    el.className = 'bubble l' + n.lane + (n.kind === 'opt' ? ' opt' : '') + (pill ? ' pill' : '');
+    el.textContent = n.label;
+    el.tabIndex = 0;
+    el.setAttribute('role', 'group');
+    el.setAttribute('aria-label', n.label);
+    board.appendChild(el);
+    n.el = el;
+    el.addEventListener('pointerenter', function () { highlight(n.id); if (!pill && !drag && !editing) showPop(n); });
+    el.addEventListener('pointerleave', function () { highlight(null); schedHide(); });
+    el.addEventListener('focus', function () { highlight(n.id); if (!pill && !editing) showPop(n); });
+    el.addEventListener('blur', function () { highlight(null); schedHide(); });
+    el.addEventListener('pointerdown', function (ev) { startDrag(ev, n); });
+    if (!pill) {
+      el.addEventListener('dblclick', function () { startEdit(n); });
+      el.addEventListener('keydown', function (ev) {
+        if (editing === n) {
+          if (ev.key === 'Enter') { ev.preventDefault(); n.el.blur(); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); n.el.textContent = n.label; n.el.blur(); }
+        } else if (ev.key === 'Enter' || ev.key === 'F2') { ev.preventDefault(); startEdit(n); }
+      });
+      el.addEventListener('blur', function () { if (editing === n) endEdit(n); });
+    }
+  });
+
+  var pathEls = [];
+  edges.forEach(function (e) {
+    var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    var lane = byId[e.from].lane;
+    p.setAttribute('class', 'edge l' + lane + (e.kind === 'cross' || e.kind === 'join' ? ' cross' : '') + (e.kind === 'opt' ? ' opt' : ''));
+    p.setAttribute('marker-end', 'url(#arr' + lane + ')');
+    svg.appendChild(p);
+    e.el = p;
+    pathEls.push(p);
+  });
+
+  // sửa tên bubble
+  function startEdit(n) {
+    if (editing) return;
+    editing = n;
+    hidePop();
+    n.el.classList.add('editing');
+    try { n.el.contentEditable = 'plaintext-only'; } catch (e) { n.el.contentEditable = 'true'; }
+    if (n.el.contentEditable !== 'plaintext-only') n.el.contentEditable = 'true';
+    n.el.focus();
+    var r = document.createRange(); r.selectNodeContents(n.el);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  function endEdit(n) {
+    var t = (n.el.textContent || '').replace(/\s+/g, ' ').trim();
+    n.label = t || n.label;
+    n.el.textContent = n.label;
+    n.el.setAttribute('aria-label', n.label);
+    n.el.contentEditable = 'false';
+    n.el.classList.remove('editing');
+    editing = null;
+    save();
+  }
+
+  // hộp mô tả khi rê chuột vào bubble
+  function sizeTa() { popTa.style.height = 'auto'; popTa.style.height = Math.max(40, popTa.scrollHeight + 2) + 'px'; }
+  function placePop() {
+    if (!cur || pop.hidden) return;
+    var n = cur, pw = pop.offsetWidth, ph = pop.offsetHeight;
+    var x = n.lane < 2 ? n.x + n.w + 8 : n.x - pw - 8;
+    if (x + pw > W - 4) x = W - pw - 4;
+    if (x < 4) x = 4;
+    pop.style.left = x + 'px';
+    pop.style.top = Math.min(boardH - ph - 4, Math.max(4, n.y)) + 'px';
+    pop.className = 'pop l' + n.lane;
+  }
+  function showPop(n) {
+    clearTimeout(hideT);
+    cur = n;
+    pop.className = 'pop l' + n.lane;
+    popT.textContent = n.label;
+    popTa.value = n.desc || '';
+    popTa.placeholder = 'Ô trống. Nhập mỗi dòng một việc nhỏ.';
+    pop.hidden = false;
+    sizeTa();
+    placePop();
+  }
+  function hidePop() { clearTimeout(hideT); pop.hidden = true; cur = null; pinned = false; }
+  function schedHide() {
+    clearTimeout(hideT);
+    hideT = setTimeout(function () {
+      if (pinned || document.activeElement === popTa) return;
+      hidePop();
+    }, 200);
+  }
+  pop.addEventListener('pointerenter', function () { clearTimeout(hideT); });
+  pop.addEventListener('pointerleave', schedHide);
+  popTa.addEventListener('input', function () {
+    if (!cur) return;
+    cur.desc = popTa.value;
+    sizeTa(); placePop(); save();
+  });
+  popTa.addEventListener('blur', schedHide);
+  popTa.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { popTa.blur(); hidePop(); } });
+  document.addEventListener('pointerdown', function (ev) {
+    if (pop.hidden) return;
+    if (pop.contains(ev.target)) return;
+    var b = ev.target.closest && ev.target.closest('.bubble');
+    if (b) return;
+    hidePop();
+  });
+
+  var W = 0, boardH = 0;
+  function layout() {
+    W = board.clientWidth;
+    var lw = W / 3;
+    boardH = PADT + END_V * UNIT + 64;
+    board.style.height = boardH + 'px';
+    nodes.forEach(function (n) {
+      var pill = n.kind === 'start' || n.kind === 'end';
+      var opt = n.kind === 'opt';
+      n.w = pill ? 96 : (opt ? lw * 0.5 : lw * 0.64);
+      n.h = pill ? 26 : 40;
+      var x0 = n.lane * lw + (opt ? lw * 0.47 : lw * 0.04) + (pill ? (lw * 0.64 - 96) / 2 : 0);
+      var y0 = PADT + n.v * UNIT + (pill ? 7 : 0);
+      n.bx = x0; n.by = y0;
+      n.lo = n.lane * lw + 4; n.hi = (n.lane + 1) * lw - n.w - 4;
+      n.x = Math.min(n.hi, Math.max(n.lo, x0 + n.ox));
+      n.y = Math.min(boardH - n.h - 4, Math.max(4, y0 + n.oy));
+      n.el.style.width = n.w + 'px';
+      n.el.style.height = n.h + 'px';
+      n.el.style.left = n.x + 'px';
+      n.el.style.top = n.y + 'px';
+    });
+    draw();
+    placePop();
+  }
+
+  function cx(n) { return n.x + n.w / 2; }
+
+  // trải đều điểm vào/ra để các đường không chồng lên nhau
+  function spread() {
+    var inc = {}, out = {};
+    edges.forEach(function (e) {
+      if (e.kind !== 'join') (inc[e.to] = inc[e.to] || []).push(e);
+      (out[e.from] = out[e.from] || []).push(e);
+    });
+    var jn = {};
+    edges.forEach(function (e) { if (e.kind === 'join') (jn[e.to] = jn[e.to] || []).push(e); });
+    Object.keys(jn).forEach(function (k) {
+      var a = jn[k].slice().sort(function (p, q) { return byId[p.from].lane - byId[q.from].lane; });
+      a.forEach(function (e, i) { e.dy = (i - (a.length - 1) / 2) * 14; });
+    });
+    Object.keys(inc).forEach(function (k) {
+      var a = inc[k].slice().sort(function (p, q) { return cx(byId[p.from]) - cx(byId[q.from]); });
+      a.forEach(function (e, i) { e.dx = (i - (a.length - 1) / 2) * 12; });
+    });
+    Object.keys(out).forEach(function (k) {
+      var seq = out[k].filter(function (e) { return e.kind !== 'cross'; }).sort(function (p, q) { return cx(byId[p.to]) - cx(byId[q.to]); });
+      seq.forEach(function (e, i) { e.sdx = (i - (seq.length - 1) / 2) * 12; });
+      var cr = out[k].filter(function (e) { return e.kind === 'cross'; }).sort(function (p, q) { return byId[p.to].y - byId[q.to].y; });
+      cr.forEach(function (e, i) { e.dy = (i - (cr.length - 1) / 2) * 7; });
+    });
+  }
+
+  function points(e) {
+    var s = byId[e.from], t = byId[e.to];
+    if (e.kind === 'join') {
+      var jx = cx(s) + (e.sdx || 0), jy = s.y + s.h, jm = t.y + t.h / 2 + (e.dy || 0);
+      return [[jx, jy], [jx, jm], [t.x + t.w, jm]];
+    }
+    var tx = cx(t) + (e.dx || 0), tt = t.y;
+    if (e.kind === 'cross') {
+      var dir = t.lane > s.lane ? 1 : -1;
+      var sx = dir > 0 ? s.x + s.w : s.x;
+      var sy = s.y + s.h / 2 + (e.dy || 0);
+      return [[sx, sy], [tx, sy], [tx, tt]];
+    }
+    var ax = cx(s) + (e.sdx || 0), ay = s.y + s.h;
+    if (Math.abs(ax - tx) < 0.5) return [[ax, ay], [tx, tt]];
+    var my = e.mv != null ? PADT + e.mv * UNIT : (ay + tt) / 2;
+    return [[ax, ay], [ax, my], [tx, my], [tx, tt]];
+  }
+
+  function round(p, r) {
+    var d = 'M' + p[0][0] + ' ' + p[0][1];
+    for (var i = 1; i < p.length - 1; i++) {
+      var a = p[i - 1], c = p[i], b = p[i + 1];
+      var d1 = Math.hypot(a[0] - c[0], a[1] - c[1]) || 1;
+      var d2 = Math.hypot(b[0] - c[0], b[1] - c[1]) || 1;
+      var rr = Math.min(r, d1 / 2, d2 / 2);
+      var p1 = [c[0] + (a[0] - c[0]) / d1 * rr, c[1] + (a[1] - c[1]) / d1 * rr];
+      var p2 = [c[0] + (b[0] - c[0]) / d2 * rr, c[1] + (b[1] - c[1]) / d2 * rr];
+      d += ' L' + p1[0] + ' ' + p1[1] + ' Q' + c[0] + ' ' + c[1] + ' ' + p2[0] + ' ' + p2[1];
+    }
+    var l = p[p.length - 1];
+    return d + ' L' + l[0] + ' ' + l[1];
+  }
+
+  function draw() {
+    spread();
+    edges.forEach(function (e) { e.el.setAttribute('d', round(points(e), 8)); });
+  }
+  var raf = 0;
+  function redraw() { if (!raf) raf = requestAnimationFrame(function () { raf = 0; draw(); }); }
+
+  function highlight(id) {
+    if (!id) { svg.classList.remove('hl'); edges.forEach(function (e) { e.el.classList.remove('on'); }); return; }
+    svg.classList.add('hl');
+    edges.forEach(function (e) { e.el.classList.toggle('on', e.from === id || e.to === id); });
+  }
+
+  var drag = null;
+  function startDrag(ev, n) {
+    if (ev.button > 0 || editing === n) return;
+    drag = { n: n, px: ev.clientX, py: ev.clientY, ox: n.ox, oy: n.oy, moved: false };
+    n.el.setPointerCapture(ev.pointerId);
+    n.el.onpointermove = function (m) {
+      if (!drag) return;
+      if (!drag.moved && Math.hypot(m.clientX - drag.px, m.clientY - drag.py) < 4) return;
+      if (!drag.moved) { drag.moved = true; n.el.classList.add('drag'); hidePop(); }
+      var nx = Math.min(n.hi, Math.max(n.lo, n.bx + drag.ox + (m.clientX - drag.px)));
+      var ny = Math.min(boardH - n.h - 4, Math.max(4, n.by + drag.oy + (m.clientY - drag.py)));
+      n.ox = nx - n.bx; n.oy = ny - n.by; n.x = nx; n.y = ny;
+      n.el.style.left = nx + 'px'; n.el.style.top = ny + 'px';
+      redraw();
+    };
+    n.el.onpointerup = n.el.onpointercancel = function () {
+      var wasTap = drag && !drag.moved;
+      n.el.classList.remove('drag');
+      n.el.onpointermove = n.el.onpointerup = n.el.onpointercancel = null;
+      drag = null;
+      // chạm trên màn hình cảm ứng: giữ hộp mô tả mở
+      if (wasTap && ev.pointerType !== 'mouse' && n.kind !== 'start' && n.kind !== 'end') { showPop(n); pinned = true; }
+    };
+  }
+
+  document.getElementById('reset').addEventListener('click', function () {
+    nodes.forEach(function (n) { n.ox = 0; n.oy = 0; });
+    layout();
+  });
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(board); else window.addEventListener('resize', layout);
+  layout();
+})();
+</script>
+
+</body></html>
