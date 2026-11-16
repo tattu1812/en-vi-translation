@@ -1,6 +1,6 @@
 # Du lieu PhoMT - khong duoc push len GitHub
 local_artifacts/
-data/
+/data/
 *.zip
 
 # Model checkpoints
