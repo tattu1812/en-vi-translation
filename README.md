@@ -257,8 +257,3 @@ Cần bảo đảm logits và target được reshape đúng kích thước khi 
 - Nếu muốn thay đổi DataLoader, tạo nhánh riêng và thông báo cho cả nhóm.
 - File `local_artifacts/` không cần thiết khi sử dụng bản dữ liệu dùng chung trên GitHub.
 
-## 10. Kết luận
-
-Pipeline dữ liệu T1–T4 đã được triển khai, đưa lên `main` và vượt qua các kiểm thử DataLoader cơ bản trên máy Tú.
-
-Trung và Đức chỉ cần cập nhật repository, cài dependencies, kiểm tra checksum và chạy `python -m tests.test_dataloader` trước khi tích hợp với mô hình của mình.
