@@ -38,33 +38,35 @@ Các cặp câu được căn chỉnh theo thứ tự dòng: dòng thứ `i` c�
 
 ## 3. Thống kê dữ liệu
 
-| Tập | Số câu tiếng Anh | Số câu tiếng Việt | Số cặp câu |
-|---|---:|---:|---:|
-| Train | 133.317 | 133.317 | 133.317 |
-| Validation | 1.553 | 1.553 | 1.553 |
-| Test | 1.268 | 1.268 | 1.268 |
-| **Tổng** | **136.138** | **136.138** | **136.138** |
+Mỗi số cặp trong bảng cũng là số dòng của từng file tiếng Anh và tiếng Việt tương ứng.
 
-Các số liệu được kiểm tra trực tiếp bằng cách đọc nội dung các file nén trong `nmt-en-vi-master.zip`.
+| Tập | Số cặp gốc | Số cặp sau làm sạch V3 |
+|---|---:|---:|
+| Train | 133.317 | 131.000 |
+| Validation | 1.553 | 1.553 |
+| Test | 1.268 | 1.268 |
+| **Tổng** | **136.138** | **133.821** |
 
-Kết quả ban đầu: số dòng của hai ngôn ngữ khớp nhau trong cả ba tập. Chưa hoàn tất kiểm tra câu rỗng, câu trùng lặp, mức độ tương ứng ngữ nghĩa và khả năng trùng lặp giữa các tập.
+Train giảm 2.317 cặp. Validation và test được chuẩn hóa và giữ nguyên số lượng. Sau chuẩn hóa, train không có cặp song ngữ trùng nguyên văn với validation hoặc test. Validation và test còn 3 cặp trùng nhau. Chi tiết nằm trong [báo cáo làm sạch V3](../results/data/iwslt15_cleaning_v3.json).
 
-## 4. Kế hoạch tiền xử lý
+## 4. Tiền xử lý V3
 
-Nhóm dự kiến thực hiện:
+`scripts/clean_iwslt15.py` đọc từng cặp EN–VI theo dòng và báo lỗi nếu hai file lệch số dòng. Hàm `normalize_text()` trong `src/data/text_normalization.py` áp dụng các bước sau cho cả ba tập.
 
-1. Giải nén và đọc các file song ngữ.
-2. Kiểm tra số dòng, câu rỗng và cặp câu không hợp lệ.
-3. Kiểm tra câu trùng lặp và khả năng rò rỉ giữa các tập.
-4. Chuẩn hóa Unicode, khoảng trắng và các HTML entity khi cần thiết.
-5. Xây dựng tokenizer hoặc subword vocabulary chỉ từ tập train.
-6. Bổ sung các token đặc biệt như PAD, BOS, EOS và UNK theo thiết kế.
-7. Chuyển câu thành token ID, padding và tạo batch.
-8. Kiểm soát độ dài chuỗi và ghi lại số lượng câu bị loại nếu có.
+1. Chuẩn hóa Unicode NFC.
+2. Giải mã HTML entity bằng `html.unescape()`, chẳng hạn `&quot;` thành dấu ngoặc kép.
+3. Chuẩn hóa khoảng trắng, gồm cả khoảng trắng không ngắt dòng.
+4. Detokenize bằng Moses với cấu hình ngôn ngữ EN hoặc VI, sau đó chuẩn hóa lại khoảng trắng và NFC. Giữ nguyên chữ hoa và chữ thường.
 
-Các bước làm sạch cần áp dụng nhất quán cho dữ liệu đầu vào của hai mô hình.
+Chỉ tập train được lọc. Mỗi cặp bị loại được ghi nhận theo lý do đầu tiên trong thứ tự sau.
 
-Không sử dụng validation hoặc test để huấn luyện tokenizer hay cập nhật trọng số mô hình.
+1. Loại cặp có ít nhất một câu rỗng.
+2. **Length Filtering.** Loại nếu câu EN hoặc VI dài hơn 100 đơn vị tách theo khoảng trắng.
+3. **Length-ratio Filtering.** Loại nếu tỷ lệ giữa độ dài câu dài hơn và câu ngắn hơn lớn hơn 2,5.
+4. **Cross-split Overlap Removal.** Loại cặp EN–VI trùng nguyên văn sau chuẩn hóa với một cặp trong validation hoặc test.
+5. **Exact-match Deduplication.** Giữ lần xuất hiện đầu tiên của mỗi cặp EN–VI còn lại trong train.
+
+SentencePiece BPE V3 được huấn luyện trên hai file train đã làm sạch, với 8.000 token và các ID PAD=0, UNK=1, BOS=2, EOS=3. Validation và test không được dùng để huấn luyện tokenizer hay cập nhật trọng số mô hình.
 
 ## 5. Sử dụng dữ liệu trong thực nghiệm
 
@@ -89,15 +91,27 @@ Không sử dụng validation hoặc test để huấn luyện tokenizer hay c�
 - Phân tích ví dụ dịch sai và ảnh hưởng của độ dài câu.
 - Không sử dụng checkpoint pretrained để thay thế việc tự xây dựng và huấn luyện hai mô hình.
 
-## 6. Quản lý dữ liệu trong repository
+## 6. Quản lý dữ liệu và tái tạo pipeline
 
-Dữ liệu gốc và dữ liệu đã giải nén được lưu tại:
+| Tài nguyên | Đường dẫn |
+|---|---|
+| Sáu file EN/VI gốc sau khi giải nén | `local_artifacts/data/iwslt15/nmt-en-vi-master/data/` |
+| Dữ liệu V3 cục bộ | `local_artifacts/data/iwslt15/cleaned_v3/` |
+| Corpus train, tokenizer và vocabulary cục bộ | `local_artifacts/tokenizer_v3/` |
+| Dữ liệu V3 dùng chung | `shared_assets/data/iwslt15/` |
+| Model SentencePiece và vocabulary V3 dùng chung | `shared_assets/tokenizer/` |
 
-`local_artifacts/data/`
+Để tái tạo pipeline từ dữ liệu gốc, giải nén các file được liệt kê ở mục 2 vào đường dẫn tương ứng rồi chạy các lệnh sau từ thư mục gốc của repository.
 
-Các file dữ liệu không được commit lên GitHub. Repository chỉ lưu mã nguồn, cấu hình, tài liệu và các kết quả nhỏ phục vụ tái lập thí nghiệm.
+```bash
+python -m scripts.check_iwslt15
+python -m scripts.clean_iwslt15
+python -m scripts.train_tokenizer
+```
 
-Nhóm cần xác minh điều khoản sử dụng và phân phối dữ liệu từ nguồn tương ứng trước khi chia sẻ dữ liệu ra bên ngoài.
+`local_artifacts/` được Git bỏ qua. Nhánh `tu/8-detokenize-iwslt15` đã chứa sáu file dữ liệu V3 và hai file tokenizer V3 trong `shared_assets/`. Bản dùng chung có thể được kiểm tra bằng `(cd shared_assets && sha256sum -c SHA256SUMS)`. Bài kiểm thử tokenizer tải trực tiếp file `.model` đã huấn luyện và kiểm tra hành vi encode/decode. Việc tái tạo artifact từ dữ liệu gốc dùng các script trên.
+
+Nhóm cần xác minh điều khoản sử dụng và phân phối dữ liệu từ nguồn tương ứng trước khi chia sẻ dữ liệu ra bên ngoài. Việc lưu tài nguyên trên nhánh làm việc không xác nhận quyền phân phối lại.
 
 ## 7. Nguồn tham khảo
 
@@ -107,8 +121,8 @@ Nhóm cần xác minh điều khoản sử dụng và phân phối dữ liệu t
 
 ## 8. Trạng thái
 
-- Đã xác định tập train, validation và test.
-- Đã xác nhận số dòng tiếng Anh và tiếng Việt khớp nhau.
-- Chưa hoàn thành bước kiểm tra chất lượng chi tiết.
-- Chưa xác nhận tokenizer và cấu hình huấn luyện cuối cùng.
-- Dữ liệu chính thức của dự án: **IWSLT'15 English–Vietnamese**.
+- **T1:** Đã kiểm tra số dòng và cách ghép cặp EN–VI trong dữ liệu gốc.
+- **T2:** Đã làm sạch V3, kiểm tra số lượng và đối chiếu các cặp trùng giữa các tập.
+- **T3:** Đã huấn luyện SentencePiece BPE V3 và kiểm tra model, vocabulary, ID đặc biệt và encode/decode.
+- **T4:** DataLoader đã qua kiểm thử trên cả ba tập với tài nguyên V3 dùng chung.
+- **T5:** SacreBLEU đã qua kiểm thử. Smoke test dùng tham chiếu làm dự đoán đạt BLEU 100 trên 1.268 câu. Điểm BLEU của hai mô hình sẽ được xác định sau khi đánh giá bản dịch thực tế.
