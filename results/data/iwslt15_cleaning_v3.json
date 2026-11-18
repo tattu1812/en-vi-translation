@@ -1,0 +1,29 @@
+{
+  "version": "v3_detokenized",
+  "settings": {
+    "unicode": "NFC",
+    "html_unescape": true,
+    "detokenization": "MosesDetokenizer",
+    "detokenization_languages": [
+      "en",
+      "vi"
+    ],
+    "preserve_case": true,
+    "max_whitespace_tokens": 100,
+    "max_length_ratio": 2.5,
+    "train_only_filtering": true
+  },
+  "train": {
+    "original": 133317,
+    "removed_leakage": 621,
+    "removed_bad_ratio": 645,
+    "removed_too_long": 509,
+    "removed_empty": 151,
+    "removed_duplicate": 391,
+    "cleaned": 131000,
+    "removed_total": 2317
+  },
+  "validation": 1553,
+  "test": 1268,
+  "validation_test_overlap": 3
+}

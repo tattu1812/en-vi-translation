@@ -1,0 +1,29 @@
+{
+  "overall": {
+    "bleu": 100.0,
+    "num_sentences": 1268,
+    "signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0"
+  },
+  "by_length": {
+    "le_10": {
+      "bleu": 100.0,
+      "num_sentences": 406,
+      "signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0"
+    },
+    "11_20": {
+      "bleu": 100.0,
+      "num_sentences": 443,
+      "signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0"
+    },
+    "21_30": {
+      "bleu": 100.0,
+      "num_sentences": 247,
+      "signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0"
+    },
+    "gt_30": {
+      "bleu": 100.0,
+      "num_sentences": 172,
+      "signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0"
+    }
+  }
+}

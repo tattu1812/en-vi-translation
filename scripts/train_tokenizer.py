@@ -4,8 +4,8 @@ import sentencepiece as spm
 
 ROOT = Path(__file__).resolve().parents[1]
 
-DATA_DIR = ROOT / "local_artifacts/data/iwslt15/cleaned"
-TOKENIZER_DIR = ROOT / "local_artifacts/tokenizer"
+DATA_DIR = ROOT / "local_artifacts/data/iwslt15/cleaned_v3"
+TOKENIZER_DIR = ROOT / "local_artifacts/tokenizer_v3"
 TOKENIZER_DIR.mkdir(parents=True, exist_ok=True)
 
 TRAIN_EN = DATA_DIR / "train.en"

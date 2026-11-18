@@ -59,7 +59,7 @@ Cài các thư viện cần thiết:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install sentencepiece
+python -m pip install sentencepiece sacremoses sacrebleu==2.6.0
 python -m pip install torch
 ```
 
@@ -80,7 +80,7 @@ python -c "import torch, sentencepiece; print('Dependencies OK')"
 
 ## 5. Cấu trúc dữ liệu dùng chung
 
-Các file đã có trên nhánh `main`:
+Các tài nguyên dùng chung của pipeline IWSLT’15 V3:
 
 ```text
 shared_assets/
@@ -102,7 +102,7 @@ shared_assets/
 
 | Tập | Số cặp câu |
 |---|---:|
-| Train | 131.189 |
+| Train | 131.000 |
 | Validation | 1.553 |
 | Test | 1.268 |
 
@@ -116,6 +116,8 @@ Tokenizer đã thống nhất các ID đặc biệt:
 | EOS | 3 |
 
 Không cần tải dữ liệu từ nguồn gốc hoặc huấn luyện lại tokenizer để chạy DataLoader. Các file dùng chung đã có trong repository.
+
+V3 chuẩn hóa Unicode và khoảng trắng, giải mã HTML entities và detokenize bằng Moses trước khi lọc tập train. Tokenizer BPE V3 có 8.000 mục từ và được huấn luyện trên tập train V3. Hãy dùng cùng bộ dữ liệu và tokenizer V3 cho cả hai mô hình. Checkpoint V1 gắn với ánh xạ token của tokenizer V1, vì vậy cần huấn luyện lại với V3 trước khi so sánh.
 
 ## 6. Kiểm tra dữ liệu và DataLoader
 
@@ -136,14 +138,24 @@ python -m tests.test_dataloader
 Kết quả mong đợi:
 
 ```text
-PASS train: 131189 pairs, src=(4, 68), tgt=(4, 83)
+PASS train: 131000 pairs, src=(4, 68), tgt=(4, 83)
 PASS validation: 1553 pairs, src=(4, 108), tgt=(4, 131)
 PASS test: 1268 pairs, src=(4, 47), tgt=(4, 57)
+PASS invalid inputs: line count mismatch, empty sentence, missing tokenizer
 
 ALL DATALOADER TESTS PASSED
 ```
 
 Nếu xuất hiện kết quả trên thì Dataset và DataLoader đã vượt qua các kiểm tra cơ bản, sẵn sàng để thử tích hợp với mô hình.
+
+**Đánh giá SacreBLEU trên test V3**
+
+```bash
+python -m tests.test_bleu
+python -m src.evaluation.bleu --predictions path/to/predictions.vi --output results/bleu/evaluation.json
+```
+
+File dự đoán chứa một câu tiếng Việt đã detokenize trên mỗi dòng, theo thứ tự test. Đánh giá cuối cùng dùng beam search size 5 cho cả hai mô hình. Báo cáo lưu corpus BLEU, SacreBLEU signature và BLEU theo bốn nhóm độ dài câu nguồn. Corpus BLEU được tính trực tiếp trên toàn bộ tập test.
 
 ## 7. Cách sử dụng DataLoader trong code
 

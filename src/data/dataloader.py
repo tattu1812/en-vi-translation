@@ -21,14 +21,29 @@ BOS_ID = 2
 EOS_ID = 3
 VOCAB_SIZE = 8000
 
+def resolve_path(path):
+    """Cho phép dùng đường dẫn tương đối từ thư mục dự án."""
+    path = Path(path)
+    return path if path.is_absolute() else ROOT / path
+
 
 class IWSLT15Dataset(Dataset):
-    def __init__(self, split):
+    def __init__(self, split, data_dir=None, tokenizer_path=None):
         if split not in ("train", "validation", "test"):
             raise ValueError(f"Invalid split: {split}")
 
+        data_dir = resolve_path(
+            data_dir if data_dir is not None else DATA_DIR
+        )
+        tokenizer_path = resolve_path(
+            tokenizer_path if tokenizer_path is not None else TOKENIZER_PATH
+        )
+
+        if not tokenizer_path.is_file():
+            raise FileNotFoundError(tokenizer_path)
+
         self.tokenizer = spm.SentencePieceProcessor(
-            model_file=str(TOKENIZER_PATH)
+            model_file=str(tokenizer_path)
         )
 
         assert self.tokenizer.get_piece_size() == VOCAB_SIZE
@@ -37,8 +52,8 @@ class IWSLT15Dataset(Dataset):
         assert self.tokenizer.bos_id() == BOS_ID
         assert self.tokenizer.eos_id() == EOS_ID
 
-        src_path = DATA_DIR / f"{split}.en"
-        tgt_path = DATA_DIR / f"{split}.vi"
+        src_path = data_dir / f"{split}.en"
+        tgt_path = data_dir / f"{split}.vi"
 
         src_lines = src_path.read_text(
             encoding="utf-8"
@@ -135,8 +150,18 @@ def collate_fn(samples):
     }
 
 
-def get_dataloader(split, batch_size=32, shuffle=None):
-    dataset = IWSLT15Dataset(split)
+def get_dataloader(
+    split,
+    batch_size=32,
+    shuffle=None,
+    data_dir=None,
+    tokenizer_path=None,
+):
+    dataset = IWSLT15Dataset(
+        split,
+        data_dir=data_dir,
+        tokenizer_path=tokenizer_path,
+    )
 
     if shuffle is None:
         shuffle = split == "train"
