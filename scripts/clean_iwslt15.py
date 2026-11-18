@@ -1,9 +1,9 @@
-
 from pathlib import Path
 from itertools import zip_longest
 from collections import Counter
 import json
-import unicodedata
+
+from src.data.text_normalization import normalize_text
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -12,14 +12,12 @@ RAW_DIR = (
     / "nmt-en-vi-master/data"
 )
 
+# Luu rieng phien ban moi, khong ghi de ban cu.
 CLEAN_DIR = (
-    ROOT / "local_artifacts/data/iwslt15/cleaned"
+    ROOT / "local_artifacts/data/iwslt15/cleaned_v3"
 )
 
 REPORT_DIR = ROOT / "results/data"
-
-CLEAN_DIR.mkdir(parents=True, exist_ok=True)
-REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 SPLITS = {
     "train": ("train.en", "train.vi"),
@@ -29,11 +27,6 @@ SPLITS = {
 
 MAX_LENGTH = 100
 MAX_RATIO = 2.5
-
-
-def normalize(text):
-    text = unicodedata.normalize("NFC", text)
-    return text.strip()
 
 
 def read_pairs(en_name, vi_name):
@@ -54,8 +47,8 @@ def read_pairs(en_name, vi_name):
                 )
 
             pairs.append((
-                normalize(en),
-                normalize(vi)
+                normalize_text(en, "en"),
+                normalize_text(vi, "vi"),
             ))
 
     return pairs
@@ -81,11 +74,13 @@ def clean_train(train_pairs, protected_pairs):
     for en, vi in train_pairs:
         stats["original"] += 1
 
-        # Moi cap chi duoc gan mot ly do loai chinh.
+        # Each pair has one primary removal reason.
         if not en or not vi:
             stats["removed_empty"] += 1
             continue
 
+        # Count whitespace-separated units,
+        # not SentencePiece subword tokens.
         en_len = len(en.split())
         vi_len = len(vi.split())
 
@@ -121,6 +116,9 @@ def clean_train(train_pairs, protected_pairs):
 
 
 def main():
+    CLEAN_DIR.mkdir(parents=True, exist_ok=True)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
     datasets = {
         name: read_pairs(*files)
         for name, files in SPLITS.items()
@@ -133,23 +131,40 @@ def main():
 
     clean_train_pairs, stats = clean_train(
         datasets["train"],
-        protected_pairs
+        protected_pairs,
     )
 
-    # Train duoc loc.
     write_pairs("train", clean_train_pairs)
 
-    # Validation va test giu nguyen so luong.
+    # Preserve validation/test sample counts.
     for name in ("validation", "test"):
         write_pairs(name, datasets[name])
 
-    # Kiem tra sau khi lam sach.
-    assert len(clean_train_pairs) == len(set(clean_train_pairs))
-    assert not (set(clean_train_pairs) & protected_pairs)
+    # Verify cleaning invariants.
+    assert len(datasets["train"]) == 133317
+    assert len(datasets["validation"]) == 1553
+    assert len(datasets["test"]) == 1268
+
+    assert len(clean_train_pairs) == len(
+        set(clean_train_pairs)
+    )
+
+    assert not (
+        set(clean_train_pairs) & protected_pairs
+    )
+
+    assert stats["original"] == (
+        stats["cleaned"] + stats["removed_total"]
+    )
 
     report = {
+        "version": "v3_detokenized",
         "settings": {
             "unicode": "NFC",
+            "html_unescape": True,
+            "detokenization": "MosesDetokenizer",
+            "detokenization_languages": ["en", "vi"],
+            "preserve_case": True,
             "max_whitespace_tokens": MAX_LENGTH,
             "max_length_ratio": MAX_RATIO,
             "train_only_filtering": True,
@@ -163,19 +178,27 @@ def main():
         ),
     }
 
-    report_path = REPORT_DIR / "iwslt15_cleaning.json"
-
-    report_path.write_text(
-        json.dumps(report, indent=2, ensure_ascii=False),
-        encoding="utf-8"
+    report_path = (
+        REPORT_DIR / "iwslt15_cleaning_v3.json"
     )
 
-    print("\n=== CLEANING REPORT ===")
+    report_path.write_text(
+        json.dumps(
+            report,
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    print("\n=== CLEANING REPORT V3 ===")
 
     for key, value in stats.items():
         print(f"{key}: {value}")
 
-    print(f"\nValidation: {len(datasets['validation'])}")
+    print(
+        f"\nValidation: {len(datasets['validation'])}"
+    )
     print(f"Test: {len(datasets['test'])}")
 
     print(f"\nCleaned data: {CLEAN_DIR}")
