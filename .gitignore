@@ -1,9 +1,10 @@
-# Du lieu PhoMT - khong duoc push len GitHub
+# Du lieu lam viec cuc bo
 local_artifacts/
 /data/
 *.zip
 
 # Model checkpoints
+/checkpoints/
 *.pt
 *.pth
 *.ckpt

@@ -4,7 +4,7 @@ from itertools import zip_longest
 
 DATA_DIR = (
     Path(__file__).resolve().parents[1]
-    / "local_artifacts/data/iwslt15/nmt-en-vi-master/data"
+    / "data/iwslt15/nmt-en-vi-master/data"
 )
 
 SPLITS = {

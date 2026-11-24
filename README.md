@@ -59,8 +59,7 @@ Cài các thư viện cần thiết:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install sentencepiece sacremoses sacrebleu==2.6.0
-python -m pip install torch
+python -m pip install -r requirements.txt
 ```
 
 Nếu chỉ cần kiểm thử DataLoader trên CPU, có thể dùng bản PyTorch CPU phù hợp với môi trường:
@@ -70,7 +69,7 @@ python -m pip install torch \
   --index-url https://download.pytorch.org/whl/cpu
 ```
 
-Chỉ cần chọn một trong hai cách cài PyTorch. Khi huấn luyện trên GPU, sử dụng bản PyTorch phù hợp với CUDA của môi trường thay vì bản CPU.
+Nếu chọn bản CPU, cài PyTorch CPU trước rồi chạy `python -m pip install -r requirements.txt`. Khi huấn luyện trên GPU, sử dụng bản PyTorch phù hợp với CUDA của môi trường thay vì bản CPU.
 
 Kiểm tra:
 
@@ -78,7 +77,20 @@ Kiểm tra:
 python -c "import torch, sentencepiece; print('Dependencies OK')"
 ```
 
-## 5. Cấu trúc dữ liệu dùng chung
+## 5. Cấu trúc dự án và dữ liệu dùng chung
+
+| Đường dẫn | Vai trò |
+|---|---|
+| `docs/proposal/`, `docs/report/` | Proposal và báo cáo |
+| `configs/` | Cấu hình huấn luyện của các mô hình |
+| `src/data/` | Làm sạch, tokenizer và DataLoader |
+| `src/models/`, `src/decoding/` | Mã mô hình và giải mã dùng chung |
+| `src/evaluate.py` | SacreBLEU tổng thể và theo độ dài câu nguồn |
+| `scripts/`, `notebooks/` | Lệnh chạy pipeline và notebook thực nghiệm |
+| `data/`, `checkpoints/` | Dữ liệu làm việc và checkpoint cục bộ, được Git bỏ qua |
+| `results/`, `tests/` | Kết quả thực nghiệm và kiểm thử |
+
+`src/models/lstm_attn.py` chứa mô hình Seq2Seq LSTM với Luong Attention. `src/decoding/` chứa giao diện giải mã chung, greedy và beam search. Transformer, vòng huấn luyện chung và attention map sẽ nằm ở `src/models/transformer.py`, `src/train.py` và `src/visualize.py` khi có triển khai.
 
 Các tài nguyên dùng chung của pipeline IWSLT’15 V3:
 
@@ -152,7 +164,7 @@ Nếu xuất hiện kết quả trên thì Dataset và DataLoader đã vượt q
 
 ```bash
 python -m tests.test_bleu
-python -m src.evaluation.bleu --predictions path/to/predictions.vi --output results/bleu/evaluation.json
+python -m src.evaluate --predictions path/to/predictions.vi --output results/bleu/evaluation.json
 ```
 
 File dự đoán chứa một câu tiếng Việt đã detokenize trên mỗi dòng, theo thứ tự test. Đánh giá cuối cùng dùng beam search size 5 cho cả hai mô hình. Báo cáo lưu corpus BLEU, SacreBLEU signature và BLEU theo bốn nhóm độ dài câu nguồn. Corpus BLEU được tính trực tiếp trên toàn bộ tập test.
@@ -267,5 +279,5 @@ Cần bảo đảm logits và target được reshape đúng kích thước khi 
 - Không dùng tập test để huấn luyện hoặc lựa chọn siêu tham số.
 - Giữ nguyên quy ước PAD/BOS/EOS và batch format.
 - Nếu muốn thay đổi DataLoader, tạo nhánh riêng và thông báo cho cả nhóm.
-- File `local_artifacts/` không cần thiết khi sử dụng bản dữ liệu dùng chung trên GitHub.
+- Thư mục làm việc `data/` chỉ cần khi chạy lại pipeline từ dữ liệu gốc. DataLoader mặc định đọc bản V3 trong `shared_assets/`.
 

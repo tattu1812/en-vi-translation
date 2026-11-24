@@ -1,0 +1,4 @@
+torch
+sentencepiece
+sacremoses
+sacrebleu==2.6.0

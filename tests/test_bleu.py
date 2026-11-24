@@ -1,5 +1,5 @@
 
-from src.evaluation.bleu import (
+from src.evaluate import (
     calculate_bleu,
     calculate_bleu_by_length,
     evaluate,

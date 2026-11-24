@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 DATA_DIR = (
     ROOT
-    / "local_artifacts/data/iwslt15/nmt-en-vi-master/data"
+    / "data/iwslt15/nmt-en-vi-master/data"
 )
 
 OUTPUT_DIR = ROOT / "results/data"

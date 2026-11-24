@@ -51,7 +51,7 @@ Train giảm 2.317 cặp. Validation và test được chuẩn hóa và giữ ng
 
 ## 4. Tiền xử lý V3
 
-`scripts/clean_iwslt15.py` đọc từng cặp EN–VI theo dòng và báo lỗi nếu hai file lệch số dòng. Hàm `normalize_text()` trong `src/data/text_normalization.py` áp dụng các bước sau cho cả ba tập.
+`scripts/clean_iwslt15.py` gọi `src/data/clean_iwslt15.py` để đọc từng cặp EN–VI theo dòng và báo lỗi nếu hai file lệch số dòng. Hàm `normalize_text()` trong `src/data/text_normalization.py` áp dụng các bước sau cho cả ba tập.
 
 1. Chuẩn hóa Unicode NFC.
 2. Giải mã HTML entity bằng `html.unescape()`, chẳng hạn `&quot;` thành dấu ngoặc kép.
@@ -95,9 +95,9 @@ SentencePiece BPE V3 được huấn luyện trên hai file train đã làm sạ
 
 | Tài nguyên | Đường dẫn |
 |---|---|
-| Sáu file EN/VI gốc sau khi giải nén | `local_artifacts/data/iwslt15/nmt-en-vi-master/data/` |
-| Dữ liệu V3 cục bộ | `local_artifacts/data/iwslt15/cleaned_v3/` |
-| Corpus train, tokenizer và vocabulary cục bộ | `local_artifacts/tokenizer_v3/` |
+| Sáu file EN/VI gốc sau khi giải nén | `data/iwslt15/nmt-en-vi-master/data/` |
+| Dữ liệu V3 cục bộ | `data/iwslt15/cleaned_v3/` |
+| Corpus train, tokenizer và vocabulary cục bộ | `data/tokenizer_v3/` |
 | Dữ liệu V3 dùng chung | `shared_assets/data/iwslt15/` |
 | Model SentencePiece và vocabulary V3 dùng chung | `shared_assets/tokenizer/` |
 
@@ -109,7 +109,7 @@ python -m scripts.clean_iwslt15
 python -m scripts.train_tokenizer
 ```
 
-`local_artifacts/` được Git bỏ qua. Nhánh `tu/8-detokenize-iwslt15` đã chứa sáu file dữ liệu V3 và hai file tokenizer V3 trong `shared_assets/`. Bản dùng chung có thể được kiểm tra bằng `(cd shared_assets && sha256sum -c SHA256SUMS)`. Bài kiểm thử tokenizer tải trực tiếp file `.model` đã huấn luyện và kiểm tra hành vi encode/decode. Việc tái tạo artifact từ dữ liệu gốc dùng các script trên.
+`data/` và `local_artifacts/` được Git bỏ qua. Nhánh `tu/8-detokenize-iwslt15` đã chứa sáu file dữ liệu V3 và hai file tokenizer V3 trong `shared_assets/`. Bản dùng chung có thể được kiểm tra bằng `(cd shared_assets && sha256sum -c SHA256SUMS)`. Bài kiểm thử tokenizer tải trực tiếp file `.model` đã huấn luyện và kiểm tra hành vi encode/decode. Việc tái tạo artifact từ dữ liệu gốc dùng các script trên.
 
 Nhóm cần xác minh điều khoản sử dụng và phân phối dữ liệu từ nguồn tương ứng trước khi chia sẻ dữ liệu ra bên ngoài. Việc lưu tài nguyên trên nhánh làm việc không xác nhận quyền phân phối lại.
 
